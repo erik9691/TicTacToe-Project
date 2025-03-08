@@ -15,13 +15,17 @@ const gameboard = (function () {
 
     const CheckValidSpot = function (spot)
     {
-        if (board[spot] === "X" || board[spot] === "O")
+        if (board[spot] === "-")
+        {
+            return true;
+        }
+        else if (board[spot] === "X" || board[spot] === "O")
         {
             return false;
         }
         else
         {
-            return true;
+            return false;
         }
     }
 
@@ -50,6 +54,33 @@ function createPlayer (side)
 
     return {playerSide,playerSpots,PlaceSpot};
 }
+
+function createComputerPlayer (side)
+{
+    const {playerSide,playerSpots,PlaceSpot} = createPlayer(side);
+
+    const Play = function ()
+    {
+        while (!PlaceSpot(Math.floor(Math.random() * 9))){}
+    }
+
+    return {playerSide,playerSpots,Play};
+}
+
+function createHumanPlayer (side)
+{
+    const {playerSide,playerSpots,PlaceSpot} = createPlayer(side);
+
+    const Play = function ()
+    {
+        let move = PlaceSpot(parseInt(prompt("Pick a spot to place (0-8): ")));
+        while (!move) {move = PlaceSpot(parseInt(prompt("Pick a spot to place (0-8): ")))}
+    }
+
+    return {playerSide,playerSpots,Play};
+}
+
+
 
 const gameManager = (function () {
     let turn = "X";
@@ -132,14 +163,14 @@ const gameManager = (function () {
         {
             if (turn === player1.playerSide) 
             {
-                while (!player1.PlaceSpot(Math.floor(Math.random() * 9))){}
-
+                player1.Play();
+                
                 if (CheckIfWon(player1.playerSpots)) 
                 {
                     EndGame(player1.playerSide);
                     break;
                 }
-                else if (CheckIfTied(player1.playerSide, player2.playerSide))
+                else if (CheckIfTied(player1.playerSpots, player2.playerSpots))
                 {
                     EndGame("NEITHER");
                     break;
@@ -151,14 +182,14 @@ const gameManager = (function () {
             }
             else
             {
-                while (!player2.PlaceSpot(Math.floor(Math.random() * 9))){}
+                player2.Play();
 
                 if (CheckIfWon(player2.playerSpots)) 
                 {
                     EndGame(player2.playerSide);
                     break;
                 }
-                else if (CheckIfTied(player1.playerSide, player2.playerSide))
+                else if (CheckIfTied(player1.playerSpots, player2.playerSpots))
                 {
                     EndGame("NEITHER");
                     break;
@@ -176,7 +207,7 @@ const gameManager = (function () {
 
 
 
-player = createPlayer("X");
-computer = createPlayer("O");
+player = createHumanPlayer("X");
+computer = createComputerPlayer("O");
 
 gameManager.StartGame(player, computer);
