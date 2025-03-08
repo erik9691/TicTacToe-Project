@@ -43,6 +43,7 @@ function createPlayer (side)
         {
             playerSpots.push(gameboard.ChangeSpot(playerSide, chosenSpot));
             console.log(gameboard.CheckBoard());
+            displayManager.UpdateBoard();
             return true;
         }
         else
@@ -205,7 +206,23 @@ const gameManager = (function () {
     return {StartGame}
 })();
 
+const displayManager = (function () {
+    const visualBoard = document.querySelectorAll(".spot");
+    console.log(visualBoard);
 
+    const UpdateBoard = function ()
+    {
+        for (const [i, spot] of gameboard.CheckBoard().entries())
+        {
+            if (spot !== "-")
+            {
+                visualBoard[i].innerText = spot
+            }
+        }
+    }
+    
+    return {UpdateBoard}
+})();
 
 player = createHumanPlayer("X");
 computer = createComputerPlayer("O");
