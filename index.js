@@ -39,23 +39,24 @@ function createPlayer (side)
 
     const PlaceSpot = function (chosenSpot)
     {
+        console.log("CHECKING " + playerSide + "'S VALIDITY");
         if (gameboard.CheckValidSpot(chosenSpot)) 
         {
             playerSpots.push(gameboard.ChangeSpot(playerSide, chosenSpot));
             console.log(gameboard.CheckBoard());
             displayManager.UpdateBoard();
-            return true;
+            gameManager.CheckEndConditions(playerSpots, playerSide);
+            console.log(playerSide + " PLACED");
         }
         else
         {
             console.log("NOT VALID TRY AGAIN");
-            return false;
         }
     }
 
     return {playerSide,playerSpots,PlaceSpot};
 }
-
+/*
 function createComputerPlayer (side)
 {
     const {playerSide,playerSpots,PlaceSpot} = createPlayer(side);
@@ -67,24 +68,20 @@ function createComputerPlayer (side)
 
     return {playerSide,playerSpots,Play};
 }
-
+*/
+/*
 function createHumanPlayer (side)
 {
     const {playerSide,playerSpots,PlaceSpot} = createPlayer(side);
-
-    const Play = function ()
-    {
-        let move = PlaceSpot(parseInt(prompt("Pick a spot to place (0-8): ")));
-        while (!move) {move = PlaceSpot(parseInt(prompt("Pick a spot to place (0-8): ")))}
-    }
-
-    return {playerSide,playerSpots,Play};
+    return {playerSide,playerSpots};
 }
-
+*/
 
 
 const gameManager = (function () {
     let turn = "X";
+    console.log(turn + "'s TURN");
+    let players = {};
 
     const ChangeTurn = function ()
     {
@@ -96,6 +93,7 @@ const gameManager = (function () {
         {
             turn = "X";
         }
+        console.log(turn + "'s TURN");
     }
 
     const CheckIfWon = function (claimedSpots)
@@ -141,15 +139,30 @@ const gameManager = (function () {
         }
     }
 
-    const CheckIfTied = function (player1Spots, player2Spots)
+    const CheckIfTied = function ()
     {
-        if (player1Spots.length >= 5 || player2Spots.length >= 5)
+        for (const spot in gameboard.CheckBoard()) {
+            if (gameboard.CheckValidSpot(spot))
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    const CheckEndConditions = function (claimedSpots, side)
+    {
+        if (CheckIfWon(claimedSpots)) 
         {
-            return true;
+            EndGame(side);
+        }
+        else if (CheckIfTied())
+        {
+            EndGame("NEITHER");
         }
         else
         {
-            return false;
+            ChangeTurn();
         }
     }
 
@@ -158,57 +171,27 @@ const gameManager = (function () {
         console.log(winner + " WON");
     }
 
-    const StartGame = function (player1, player2)
-    {
-        while (true)
+    const RegisterPlayers = function (playerX, playerO) {
+        players["X"] = playerX;
+        players["O"] = playerO;
+    };
+
+    const ProcessMove = function (chosenSpot) {
+        if (gameboard.CheckValidSpot(chosenSpot))
         {
-            if (turn === player1.playerSide) 
-            {
-                player1.Play();
-                
-                if (CheckIfWon(player1.playerSpots)) 
-                {
-                    EndGame(player1.playerSide);
-                    break;
-                }
-                else if (CheckIfTied(player1.playerSpots, player2.playerSpots))
-                {
-                    EndGame("NEITHER");
-                    break;
-                }
-                else
-                {
-                    ChangeTurn();
-                }
-            }
-            else
-            {
-                player2.Play();
-
-                if (CheckIfWon(player2.playerSpots)) 
-                {
-                    EndGame(player2.playerSide);
-                    break;
-                }
-                else if (CheckIfTied(player1.playerSpots, player2.playerSpots))
-                {
-                    EndGame("NEITHER");
-                    break;
-                }
-                else
-                {
-                    ChangeTurn();
-                }
-            }
+            players[turn].PlaceSpot(chosenSpot);
         }
-    }
+        else
+        {
+            console.log("NOT VALID TRY AGAIN");
+        }
+    };
 
-    return {StartGame}
+    return {CheckEndConditions, RegisterPlayers, ProcessMove}
 })();
 
 const displayManager = (function () {
     const visualBoard = document.querySelectorAll(".spot");
-    console.log(visualBoard);
 
     const UpdateBoard = function ()
     {
@@ -220,11 +203,21 @@ const displayManager = (function () {
             }
         }
     }
+
+    visualBoard.forEach((spot) => 
+    {
+        spot.addEventListener("click", function(e){
+            e.preventDefault();
+            const chosenSpot = parseInt(e.target.id);
+            gameManager.ProcessMove(chosenSpot);
+        ;});
+    });
     
-    return {UpdateBoard}
+    return {visualBoard, UpdateBoard}
 })();
 
-player = createHumanPlayer("X");
-computer = createComputerPlayer("O");
 
-gameManager.StartGame(player, computer);
+player1 = createPlayer("X");
+player2 = createPlayer("O");
+
+gameManager.RegisterPlayers(player1, player2);
